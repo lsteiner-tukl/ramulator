@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <functional>
 #include <map>
+#include <chrono>
 
 /* Standards */
 #include "Gem5Wrapper.h"
@@ -42,14 +43,15 @@ void run_dramtrace(const Config& configs, Memory<T, Controller>& memory, const c
 
     /* run simulation */
     bool stall = false, end = false;
-    int reads = 0, writes = 0, clks = 0;
+    uint64_t clks = 0;
+    int reads = 0, writes = 0;// clks = 0;
     long addr = 0;
     Request::Type type = Request::Type::READ;
     map<int, int> latencies;
     auto read_complete = [&latencies](Request& r){latencies[r.depart - r.arrive]++;};
 
     Request req(addr, type, read_complete);
-
+    auto start = std::chrono::high_resolution_clock::now();
     while (!end || memory.pending_requests()){
         if (!end && !stall){
             end = !trace.get_dramtrace_request(addr, type);
@@ -74,6 +76,10 @@ void run_dramtrace(const Config& configs, Memory<T, Controller>& memory, const c
         Stats::curTick++; // memory clock, global, for Statistics
     }
     // This a workaround for statistics set only initially lost in the end
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    //std::cout << "Clocks: " << clks << std::endl;
+    std::cerr << elapsed.count();
     memory.finish();
     Stats::statlist.printall();
 

@@ -459,15 +459,37 @@ bool Trace::get_dramtrace_request(long& req_addr, Request::Type& req_type)
     if (file.eof()) {
         return false;
     }
-    size_t pos;
-    req_addr = std::stoul(line, &pos, 16);
+//    size_t pos;
+//    req_addr = std::stoul(line, &pos, 16);
+//
+//    pos = line.find_first_not_of(' ', pos+1);
+//
+//    if (pos == string::npos || line.substr(pos)[0] == 'R')
+//        req_type = Request::Type::READ;
+//    else if (line.substr(pos)[0] == 'W')
+//        req_type = Request::Type::WRITE;
+//    else assert(false);
+    //return true;
 
-    pos = line.find_first_not_of(' ', pos+1);
 
-    if (pos == string::npos || line.substr(pos)[0] == 'R')
+    size_t previousIndex = 0;
+    size_t spaceIndex = 0;
+
+    spaceIndex = line.find_first_of(":", 0);
+
+    //ccStr = line.substr(0, spaceIndex);
+    previousIndex = spaceIndex + 1;
+
+    spaceIndex = line.find_first_not_of("\t", previousIndex);
+    if (line.substr(spaceIndex, line.find_first_of("\t", spaceIndex) - spaceIndex).compare("read") == 0)
         req_type = Request::Type::READ;
-    else if (line.substr(pos)[0] == 'W')
+    else
         req_type = Request::Type::WRITE;
-    else assert(false);
+
+    previousIndex = line.find_first_of("\t", spaceIndex);
+
+    spaceIndex = line.find_first_not_of("\n", previousIndex);
+    req_addr = std::stoul(line.substr(spaceIndex + 1, line.find_first_of("\n", spaceIndex) - spaceIndex), nullptr, 16);
+
     return true;
 }
