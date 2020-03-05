@@ -1,5 +1,6 @@
 #include "Processor.h"
 #include <cassert>
+#include <sstream>
 
 using namespace std;
 using namespace ramulator;
@@ -452,7 +453,7 @@ bool Trace::get_filtered_request(long& bubble_cnt, long& req_addr, Request::Type
     return true;
 }
 
-bool Trace::get_dramtrace_request(long& req_addr, Request::Type& req_type)
+bool Trace::get_dramtrace_request(long& req_addr, Request::Type& req_type, uint64_t& req_cycle)
 {
     string line;
     getline(file, line);
@@ -470,26 +471,52 @@ bool Trace::get_dramtrace_request(long& req_addr, Request::Type& req_type)
 //        req_type = Request::Type::WRITE;
 //    else assert(false);
     //return true;
+    
+    
+    string time;
+    string command;
+    string address;
 
+    std::istringstream iss(line);
 
-    size_t previousIndex = 0;
-    size_t spaceIndex = 0;
+    // Get the timestamp for the transaction.
+    iss >> time;
+    req_cycle = std::stoull(time.c_str());
 
-    spaceIndex = line.find_first_of(":", 0);
+    // Get the command.
+    iss >> command;
 
-    //ccStr = line.substr(0, spaceIndex);
-    previousIndex = spaceIndex + 1;
-
-    spaceIndex = line.find_first_not_of("\t", previousIndex);
-    if (line.substr(spaceIndex, line.find_first_of("\t", spaceIndex) - spaceIndex).compare("read") == 0)
+    if (command == "read")
         req_type = Request::Type::READ;
     else
         req_type = Request::Type::WRITE;
 
-    previousIndex = line.find_first_of("\t", spaceIndex);
 
-    spaceIndex = line.find_first_not_of("\n", previousIndex);
-    req_addr = std::stoul(line.substr(spaceIndex + 1, line.find_first_of("\n", spaceIndex) - spaceIndex), nullptr, 16);
+    // Get the address.
+    iss >> address;
+
+    req_addr = std::stoull(address.c_str(), 0, 16);
+    
+
+
+    // size_t previousIndex = 0;
+    // size_t spaceIndex = 0;
+
+    // spaceIndex = line.find_first_of(":", 0);
+
+    // //ccStr = line.substr(0, spaceIndex);
+    // previousIndex = spaceIndex + 1;
+
+    // spaceIndex = line.find_first_not_of("\t", previousIndex);
+    // if (line.substr(spaceIndex, line.find_first_of("\t", spaceIndex) - spaceIndex).compare("read") == 0)
+        // req_type = Request::Type::READ;
+    // else
+        // req_type = Request::Type::WRITE;
+
+    // previousIndex = line.find_first_of("\t", spaceIndex);
+
+    // spaceIndex = line.find_first_not_of("\n", previousIndex);
+    // req_addr = std::stoul(line.substr(spaceIndex + 1, line.find_first_of("\n", spaceIndex) - spaceIndex), nullptr, 16);
 
     return true;
 }

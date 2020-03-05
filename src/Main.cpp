@@ -42,10 +42,11 @@ void run_dramtrace(const Config& configs, Memory<T, Controller>& memory, const c
     Trace trace(tracename);
 
     /* run simulation */
-    bool stall = false, end = false;
+    bool stall = false, end = false, tooEarly = false;
     uint64_t clks = 0;
     int reads = 0, writes = 0;// clks = 0;
     long addr = 0;
+    uint64_t cycle = 0;
     Request::Type type = Request::Type::READ;
     map<int, int> latencies;
     auto read_complete = [&latencies](Request& r){latencies[r.depart - r.arrive]++;};
@@ -53,11 +54,12 @@ void run_dramtrace(const Config& configs, Memory<T, Controller>& memory, const c
     Request req(addr, type, read_complete);
     auto start = std::chrono::high_resolution_clock::now();
     while (!end || memory.pending_requests()){
-        if (!end && !stall){
-            end = !trace.get_dramtrace_request(addr, type);
-        }
+        if (!end && !stall && !tooEarly)
+            end = !trace.get_dramtrace_request(addr, type, cycle);
+            
+        tooEarly = (cycle > clks);
 
-        if (!end){
+        if (!end && !tooEarly){
             req.addr = addr;
             req.type = type;
             stall = !memory.send(req);
@@ -66,7 +68,7 @@ void run_dramtrace(const Config& configs, Memory<T, Controller>& memory, const c
                 else if (type == Request::Type::WRITE) writes++;
             }
         }
-        else {
+        else if (end) {
             memory.set_high_writeq_watermark(0.0f); // make sure that all write requests in the
                                                     // write queue are drained
         }
