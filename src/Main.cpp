@@ -80,8 +80,7 @@ void run_dramtrace(const Config& configs, Memory<T, Controller>& memory, const c
     // This a workaround for statistics set only initially lost in the end
     auto finish = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = finish - start;
-    //std::cout << "Clocks: " << clks << std::endl;
-    std::cerr << elapsed.count();
+    std::cout << "Simulated wc time: " << elapsed.count() << ", simulated cycles: " << clks << std::endl;
     memory.finish();
     Stats::statlist.printall();
 

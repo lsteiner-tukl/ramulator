@@ -78,7 +78,7 @@ public:
         ChRaBaRoCo,
         RoBaRaCoCh,
         MAX,
-    } type = Type::ChRaBaRoCo;
+    } type = Type::RoBaRaCoCh;
 
     enum class Translation {
       None,
